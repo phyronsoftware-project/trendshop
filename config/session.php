@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Str;
 
+// Prevent invalid deployment values from expiring authentication cookies immediately.
+$sessionLifetime = (int) env('SESSION_LIFETIME', 120);
+
 return [
 
     /*
@@ -32,7 +35,7 @@ return [
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    'lifetime' => $sessionLifetime > 0 ? $sessionLifetime : 120,
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 

@@ -4,6 +4,9 @@ import { initializeChat } from './chat';
 
 window.$ = window.jQuery = $;
 
+// Restore the legacy timing helper required by Summernote 0.9 with jQuery 4.
+$.now ??= Date.now;
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeChat();
     const sidebar = document.querySelector('[data-admin-sidebar]');
