@@ -25,12 +25,26 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force HTTPS URLs in production (Vercel).
+        /*
+        |--------------------------------------------------------------------------
+        | Force HTTPS in Production
+        |--------------------------------------------------------------------------
+        |
+        | Vercel terminates HTTPS before forwarding the request to Laravel.
+        | Force Laravel's generated URLs, assets, routes, and forms to use
+        | the public HTTPS production URL.
+        |
+        */
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+            URL::forceRootUrl(config('app.url'));
         }
 
-        // Share administrator-managed public settings without changing component structure.
+        /*
+        |--------------------------------------------------------------------------
+        | Public Settings
+        |--------------------------------------------------------------------------
+        */
         View::composer(['components.header', 'components.footer'], function ($view): void {
             $settings = Schema::hasTable('settings')
                 ? Setting::query()
@@ -48,6 +62,11 @@ class AppServiceProvider extends ServiceProvider
             $view->with(compact('settings', 'socialLinks'));
         });
 
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Notifications
+        |--------------------------------------------------------------------------
+        */
         View::composer('admin.*', function ($view): void {
             $adminUnreadNotifications = Schema::hasTable('admin_notifications')
                 ? AdminNotification::query()
