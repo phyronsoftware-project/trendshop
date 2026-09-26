@@ -56,7 +56,7 @@ return [
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
             // Keep MySQL timestamp reads and writes aligned with Laravel's UTC clock.
-            'timezone' => env('DB_TIMEZONE', '+00:00'),
+            'timezone' => env('APP_TIMEZONE', 'Asia/Phnom_Penh'),
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
