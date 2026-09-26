@@ -1,0 +1,324 @@
+@import 'tailwindcss';
+@import 'tom-select/dist/css/tom-select.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+
+/* Use the class-driven theme selected by the customer. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-khmer: 'Noto Sans Khmer', sans-serif;
+    --color-brand: #173f88;
+    --color-brand-deep: #0a2f6b;
+    --color-night: #000000;
+    --color-night-card: #0e1113;
+}
+
+/* Hide the page scrollbar while preserving mouse, touch and keyboard scrolling. */
+html,
+body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide customer chat scrollbars while preserving scrolling behavior. */
+[data-chat-messages],
+[data-chat-body] {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+[data-chat-messages]::-webkit-scrollbar,
+[data-chat-body]::-webkit-scrollbar {
+    display: none;
+}
+
+/* Apply the reference Khmer typeface with consistent native rendering. */
+body.locale-km,
+body.locale-km p,
+body.locale-km label,
+body.locale-km a,
+body.locale-km button,
+body.locale-km input,
+body.locale-km select,
+body.locale-km textarea,
+body.locale-km summary,
+body.locale-km h1,
+body.locale-km h2,
+body.locale-km h3,
+body.locale-km h4,
+body.locale-km span {
+    font-family: 'Noto Sans Khmer', sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+}
+
+/* Match the Khmer heading scale and weight used by the supplied reference. */
+body.locale-km [data-page-heading] {
+    font-size: 27px;
+    line-height: 1.5;
+    letter-spacing: 0;
+    font-weight: 700;
+}
+
+body.locale-km [data-page-copy] {
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+body.locale-km [data-storefront-header] nav a {
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+/* Match Tom Select controls to the storefront theme. */
+.ts-wrapper.multi .ts-control {
+    min-height: 3.25rem;
+    border: 1px solid #dbe5f4;
+    border-radius: 0.875rem;
+    padding: 0.55rem 0.75rem;
+    box-shadow: none;
+    background: #ffffff;
+}
+
+.ts-wrapper.multi .ts-control > div {
+    border-radius: 9999px;
+    background: #e9f1ff;
+    color: #173f88;
+    font-weight: 700;
+    padding: 0.45rem 0.7rem;
+}
+
+.ts-dropdown {
+    overflow: hidden;
+    border: 1px solid #dbe5f4;
+    border-radius: 0.875rem;
+    box-shadow: 0 18px 45px rgb(23 63 136 / 14%);
+}
+
+.ts-dropdown .active {
+    background: #edf4ff;
+    color: #173f88;
+}
+
+.dark .ts-wrapper.multi .ts-control,
+.dark .ts-dropdown {
+    border-color: #263142;
+    background: #0e1113;
+    color: #f8fafc;
+}
+
+.dark .ts-control input,
+.dark .ts-dropdown .option {
+    color: #f8fafc;
+}
+
+.dark .ts-dropdown .active {
+    background: #173f88;
+}
+
+/* Match the storefront filter controls to the compact dashboard form. */
+[data-storefront-filter] .ts-wrapper.multi .ts-control {
+    min-height: 2.25rem;
+    border-radius: 0;
+    padding: 0.25rem 0.5rem;
+}
+
+[data-storefront-filter] .ts-wrapper.multi .ts-control > div {
+    border-radius: 0;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+}
+
+[data-storefront-filter] .ts-dropdown {
+    border-radius: 0;
+}
+
+/* Keep keyboard focus visible across custom controls. */
+:focus-visible {
+    outline: 3px solid rgb(37 99 235 / 35%);
+    outline-offset: 3px;
+}
+
+/* Recreate the compact starburst badge used by the reference shop card. */
+.product-card-burst {
+    clip-path: polygon(50% 0%, 60% 12%, 71% 3%, 78% 16%, 91% 9%, 88% 25%, 100% 25%, 92% 38%, 100% 50%, 92% 62%, 100% 75%, 88% 75%, 91% 91%, 78% 84%, 71% 97%, 60% 88%, 50% 100%, 40% 88%, 29% 97%, 22% 84%, 9% 91%, 12% 75%, 0% 75%, 8% 62%, 0% 50%, 8% 38%, 0% 25%, 12% 25%, 9% 9%, 22% 16%, 29% 3%, 40% 12%);
+}
+
+.product-card-burst::before {
+    position: absolute;
+    inset: 0.45rem;
+    z-index: 1;
+    border-radius: 9999px;
+    background: #ffdf07;
+    content: '';
+}
+
+/* Style every reusable alert status with a compact accessible treatment. */
+[data-alert][data-status='success'] {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+[data-alert][data-status='error'] {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+[data-alert][data-status='warning'] {
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+[data-alert][data-status='info'] {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #173f88;
+}
+
+.dark [data-alert][data-status='success'] {
+    border-color: #166534;
+    background: #052e16;
+    color: #bbf7d0;
+}
+
+.dark [data-alert][data-status='error'] {
+    border-color: #991b1b;
+    background: #450a0a;
+    color: #fecaca;
+}
+
+.dark [data-alert][data-status='warning'] {
+    border-color: #92400e;
+    background: #451a03;
+    color: #fde68a;
+}
+
+.dark [data-alert][data-status='info'] {
+    border-color: #1d4ed8;
+    background: #172554;
+    color: #dbeafe;
+}
+
+/* Animate the full-screen product image preview managed by MicroModal. */
+.product-image-modal {
+    display: none;
+}
+
+.product-image-modal.is-open {
+    display: block;
+}
+
+.product-image-modal[aria-hidden='false'] .product-image-modal__overlay {
+    animation: product-image-overlay-in 0.3s ease both;
+}
+
+.product-image-modal[aria-hidden='false'] .product-image-modal__content {
+    animation: product-image-content-in 0.3s ease both;
+}
+
+.product-image-modal[aria-hidden='true'] .product-image-modal__overlay {
+    animation: product-image-overlay-out 0.3s ease both;
+}
+
+.product-image-modal[aria-hidden='true'] .product-image-modal__content {
+    animation: product-image-content-out 0.3s ease both;
+}
+
+@keyframes product-image-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes product-image-overlay-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes product-image-content-in {
+    from { transform: scale(0.94); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes product-image-content-out {
+    from { transform: scale(1); opacity: 1; }
+    to { transform: scale(0.94); opacity: 0; }
+}
+
+/* Animate opened menus and third-party dropdowns consistently. */
+[data-mobile-menu]:not(.hidden),
+.ts-dropdown {
+    animation: storefront-dropdown-in 0.3s ease-out;
+}
+
+@keyframes storefront-dropdown-in {
+    from {
+        transform: translateY(-0.5rem) scale(0.98);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Move the two matching ranking groups continuously from right to left. */
+.top-seller-marquee {
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+}
+
+.top-seller-track {
+    animation: top-seller-scroll 42s linear infinite;
+    will-change: transform;
+}
+
+.top-seller-marquee:hover .top-seller-track,
+.top-seller-marquee:focus-within .top-seller-track {
+    animation-play-state: paused;
+}
+
+@keyframes top-seller-scroll {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+/* Respect reduced-motion preferences while keeping normal actions smooth. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+
+    .top-seller-marquee {
+        overflow-x: auto;
+        mask-image: none;
+        -webkit-mask-image: none;
+    }
+
+    .top-seller-track {
+        animation: none;
+        transform: none;
+    }
+}

@@ -1,0 +1,52 @@
+{
+    "info": {
+        "_postman_id": "999239e6-f126-4cc6-a903-acde17134101",
+        "name": "TrendShop Wishlist AJAX",
+        "description": "Session-authenticated wishlist toggle used by the no-refresh product favorite buttons.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        { "key": "base_url", "value": "http://127.0.0.1:8000" },
+        { "key": "csrf_token", "value": "" },
+        { "key": "customer_email", "value": "customer@example.com" },
+        { "key": "customer_password", "value": "password" },
+        { "key": "product_id", "value": "1" }
+    ],
+    "item": [
+        {
+            "name": "Get Customer CSRF Token",
+            "request": { "method": "GET", "url": "{{base_url}}/login" },
+            "event": [{ "listen": "test", "script": { "exec": ["const match = pm.response.text().match(/name=\"_token\" value=\"([^\"]+)\"/);", "if (match) pm.collectionVariables.set('csrf_token', match[1]);"] } }]
+        },
+        {
+            "name": "Customer Login",
+            "request": {
+                "method": "POST",
+                "header": [{ "key": "Accept", "value": "application/json" }],
+                "body": { "mode": "urlencoded", "urlencoded": [
+                    { "key": "_token", "value": "{{csrf_token}}" },
+                    { "key": "email", "value": "{{customer_email}}" },
+                    { "key": "password", "value": "{{customer_password}}" }
+                ] },
+                "url": "{{base_url}}/login"
+            }
+        },
+        {
+            "name": "Toggle Favorite Without Refresh",
+            "request": {
+                "method": "POST",
+                "header": [
+                    { "key": "Accept", "value": "application/json" },
+                    { "key": "X-CSRF-TOKEN", "value": "{{csrf_token}}" }
+                ],
+                "body": { "mode": "urlencoded", "urlencoded": [{ "key": "_token", "value": "{{csrf_token}}" }] },
+                "url": "{{base_url}}/wishlist/{{product_id}}"
+            },
+            "event": [{ "listen": "test", "script": { "exec": ["pm.test('Wishlist toggled', () => pm.expect(pm.response.code).to.equal(200));", "const data = pm.response.json();", "pm.expect(data).to.have.keys('wishlisted', 'message');"] } }]
+        },
+        {
+            "name": "Open Wishlist Page",
+            "request": { "method": "GET", "url": "{{base_url}}/wishlist" }
+        }
+    ]
+}

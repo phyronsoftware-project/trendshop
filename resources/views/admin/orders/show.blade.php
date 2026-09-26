@@ -1,0 +1,29 @@
+@extends('admin.layouts.app')
+
+@section('title', 'Order '.$order->order_number)
+@section('breadcrumb', 'Sales / Orders / '.$order->order_number)
+
+@section('content')
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+        {{-- Display order details using Cambodia local time. --}}
+        <div><a data-admin-load href="{{ route('admin.orders.index') }}" class="text-xs font-bold text-[#173f88]">← Back to orders</a><h1 class="mt-2 text-xl font-bold">Order {{ $order->order_number }}</h1><p class="mt-1 text-xs text-slate-500">Placed {{ ($order->placed_at ?? $order->created_at)->timezone(config('app.display_timezone'))->format('d M Y, h:i A') }}</p></div>
+        <a href="{{ route('admin.orders.label', $order) }}" target="_blank" class="inline-flex h-9 items-center gap-2 border border-[#173f88] px-4 text-xs font-bold text-[#173f88]"><x-admin.icon name="print" class="size-4" /> Print delivery label</a>
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-[1fr_330px]">
+        <div class="grid gap-5">
+            {{-- Show the complete delivery destination before fulfillment. --}}
+            <section class="border border-slate-200 bg-white p-5 shadow-sm"><div class="flex items-center justify-between gap-3"><h2 class="text-sm font-bold">Delivery address</h2><span class="bg-blue-50 px-2 py-1 text-[10px] font-bold text-[#173f88]">{{ $order->delivery_country_code }}</span></div><div class="mt-4 grid gap-2 text-xs"><strong class="text-sm">{{ $order->recipient_name }}</strong><span>{{ $order->recipient_phone }}</span><p class="max-w-2xl leading-5 text-slate-600">{{ collect([$order->delivery_address_line_1, $order->delivery_address_line_2, $order->delivery_commune, $order->delivery_district, $order->delivery_city_province, $order->delivery_postal_code])->filter()->join(', ') }}</p>@if($order->customer_note)<div class="mt-2 border-l-3 border-amber-400 bg-amber-50 px-3 py-2"><strong>Customer note:</strong> {{ $order->customer_note }}</div>@endif</div></section>
+
+            <section class="overflow-hidden border border-slate-200 bg-white shadow-sm"><div class="border-b border-slate-200 px-5 py-4"><h2 class="text-sm font-bold">Products</h2></div><div class="overflow-x-auto"><table class="w-full min-w-[650px] text-left text-xs"><thead class="bg-slate-50 text-[10px] uppercase text-slate-500"><tr><th class="px-5 py-3">Product</th><th class="px-5 py-3">SKU</th><th class="px-5 py-3 text-center">Qty</th><th class="px-5 py-3 text-right">Price</th><th class="px-5 py-3 text-right">Total</th></tr></thead><tbody>@foreach($order->items as $item)<tr class="border-t border-slate-100"><td class="px-5 py-3"><div class="flex items-center gap-3">@if($item->product_image_path)<img src="{{ str_starts_with($item->product_image_path, 'http') || str_starts_with($item->product_image_path, '/') ? $item->product_image_path : asset($item->product_image_path) }}" alt="" class="size-12 border border-slate-200 object-contain">@endif<strong>{{ $item->product_name }}</strong></div></td><td class="px-5 py-3 text-slate-500">{{ $item->product_sku }}</td><td class="px-5 py-3 text-center font-bold">{{ $item->quantity }}</td><td class="px-5 py-3 text-right">${{ $item->unit_price }}</td><td class="px-5 py-3 text-right font-bold">${{ $item->line_total }}</td></tr>@endforeach</tbody></table></div></section>
+        </div>
+
+        <aside class="grid content-start gap-5">
+            <section class="border border-slate-200 bg-white p-5 shadow-sm"><h2 class="text-sm font-bold">Fulfillment</h2><form method="POST" action="{{ route('admin.orders.update', $order) }}" class="mt-4 grid gap-3">@csrf @method('PATCH')<label class="grid gap-1 text-[11px] font-bold">Order status<select name="status" class="h-9 border border-slate-200 px-3 text-xs">@foreach(['pending','confirmed','processing','shipped','delivered','cancelled','refunded'] as $status)<option value="{{ $status }}" @selected($order->status === $status)>{{ ucfirst($status) }}</option>@endforeach</select></label><label class="grid gap-1 text-[11px] font-bold">Payment status<select name="payment_status" class="h-9 border border-slate-200 px-3 text-xs">@foreach(['unpaid','pending','paid','failed','refunded'] as $payment)<option value="{{ $payment }}" @selected($order->payment_status === $payment)>{{ ucfirst($payment) }}</option>@endforeach</select></label><button class="h-9 bg-[#173f88] px-4 text-xs font-bold text-white">Save status</button><p class="text-[10px] leading-4 text-slate-500">Changing to Shipped or Delivered opens the printable delivery label.</p></form></section>
+
+            <section class="border border-slate-200 bg-white p-5 shadow-sm"><h2 class="text-sm font-bold">Payment summary</h2><dl class="mt-4 grid gap-2 text-xs"><div class="flex justify-between"><dt class="text-slate-500">Subtotal</dt><dd>${{ $order->subtotal }}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Discount</dt><dd>-${{ $order->discount_total }}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Delivery</dt><dd>${{ $order->delivery_fee }}</dd></div><div class="flex justify-between border-t border-slate-200 pt-3 text-base font-bold"><dt>Total</dt><dd class="text-rose-500">${{ $order->grand_total }}</dd></div></dl></section>
+
+            @if($order->statusHistories->isNotEmpty())<section class="border border-slate-200 bg-white p-5 shadow-sm"><h2 class="text-sm font-bold">Status history</h2><div class="mt-4 grid gap-3">@foreach($order->statusHistories->sortByDesc('created_at') as $history)<div class="border-l-2 border-[#173f88] pl-3 text-[11px]"><strong>{{ ucfirst($history->to_status) }}</strong><p class="mt-0.5 text-slate-500">{{ $history->created_at?->timezone(config('app.display_timezone'))->format('d M Y, h:i A') }} · {{ $history->changedBy?->name ?? 'System' }}</p></div>@endforeach</div></section>@endif
+        </aside>
+    </div>
+@endsection

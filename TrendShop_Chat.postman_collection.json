@@ -1,0 +1,137 @@
+{
+    "info": {
+        "_postman_id": "33b6b3a7-6a15-47e3-a274-6d7771b61e41",
+        "name": "TrendShop Customer and Admin Chat",
+        "description": "Session-authenticated TrendShop chat routes for text, image and voice messages. Run each login-page request first so the collection captures a valid CSRF token.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        { "key": "base_url", "value": "http://localhost:8000" },
+        { "key": "csrf_token", "value": "" },
+        { "key": "customer_email", "value": "customer@example.com" },
+        { "key": "customer_password", "value": "password" },
+        { "key": "admin_email", "value": "admin@example.com" },
+        { "key": "admin_password", "value": "password" },
+        { "key": "conversation_id", "value": "1" },
+        { "key": "message_id", "value": "1" }
+    ],
+    "item": [
+        {
+            "name": "Customer Authentication",
+            "item": [
+                {
+                    "name": "Get Customer CSRF Token",
+                    "request": { "method": "GET", "url": "{{base_url}}/login" },
+                    "event": [{ "listen": "test", "script": { "exec": ["const match = pm.response.text().match(/name=\"_token\" value=\"([^\"]+)\"/);", "if (match) pm.collectionVariables.set('csrf_token', match[1]);"] } }]
+                },
+                {
+                    "name": "Customer Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [{ "key": "Accept", "value": "application/json" }],
+                        "body": { "mode": "urlencoded", "urlencoded": [
+                            { "key": "_token", "value": "{{csrf_token}}" },
+                            { "key": "email", "value": "{{customer_email}}" },
+                            { "key": "password", "value": "{{customer_password}}" }
+                        ] },
+                        "url": "{{base_url}}/login"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Customer Chat",
+            "item": [
+                { "name": "Open Chat Page", "request": { "method": "GET", "url": "{{base_url}}/contact" } },
+                {
+                    "name": "Load New Messages",
+                    "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{base_url}}/contact/messages?after_id=0" },
+                    "event": [{ "listen": "test", "script": { "exec": ["const data = pm.response.json();", "if (data.conversation_id) pm.collectionVariables.set('conversation_id', data.conversation_id);", "if (data.messages?.length) pm.collectionVariables.set('message_id', data.messages[data.messages.length - 1].id);"] } }]
+                },
+                {
+                    "name": "Send Text Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "X-CSRF-TOKEN", "value": "{{csrf_token}}" }],
+                        "body": { "mode": "formdata", "formdata": [{ "key": "body", "value": "Hello admin, I need help with a product.", "type": "text" }] },
+                        "url": "{{base_url}}/contact/messages"
+                    },
+                    "event": [{ "listen": "test", "script": { "exec": ["const data = pm.response.json();", "pm.collectionVariables.set('conversation_id', data.conversation_id);", "pm.collectionVariables.set('message_id', data.message.id);"] } }]
+                },
+                {
+                    "name": "Send Multiple Image Messages",
+                    "request": {
+                        "method": "POST",
+                        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "X-CSRF-TOKEN", "value": "{{csrf_token}}" }],
+                        "body": { "mode": "formdata", "formdata": [{ "key": "body", "value": "Please check these images.", "type": "text" }, { "key": "attachments[]", "type": "file", "src": [] }, { "key": "attachments[]", "type": "file", "src": [] }] },
+                        "url": "{{base_url}}/contact/messages"
+                    }
+                },
+                {
+                    "name": "Send Voice Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "X-CSRF-TOKEN", "value": "{{csrf_token}}" }],
+                        "body": { "mode": "formdata", "formdata": [{ "key": "attachment", "type": "file", "src": [] }, { "key": "audio_duration_seconds", "value": "12", "type": "text" }] },
+                        "url": "{{base_url}}/contact/messages"
+                    }
+                },
+                { "name": "View Private Attachment", "request": { "method": "GET", "url": "{{base_url}}/chat/attachments/{{message_id}}" } }
+            ]
+        },
+        {
+            "name": "Admin Authentication",
+            "item": [
+                {
+                    "name": "Get Admin CSRF Token",
+                    "request": { "method": "GET", "url": "{{base_url}}/admin/phyron/100203/trend_shop/login" },
+                    "event": [{ "listen": "test", "script": { "exec": ["const match = pm.response.text().match(/name=\"_token\" value=\"([^\"]+)\"/);", "if (match) pm.collectionVariables.set('csrf_token', match[1]);"] } }]
+                },
+                {
+                    "name": "Admin Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [{ "key": "Accept", "value": "application/json" }],
+                        "body": { "mode": "urlencoded", "urlencoded": [
+                            { "key": "_token", "value": "{{csrf_token}}" },
+                            { "key": "email", "value": "{{admin_email}}" },
+                            { "key": "password", "value": "{{admin_password}}" }
+                        ] },
+                        "url": "{{base_url}}/admin/phyron/100203/trend_shop/login"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Chat",
+            "item": [
+                { "name": "Open Admin Inbox", "request": { "method": "GET", "url": "{{base_url}}/admin/phyron/100203/trend_shop/messages" } },
+                { "name": "Refresh Conversation List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{base_url}}/admin/phyron/100203/trend_shop/messages/conversations?active_conversation={{conversation_id}}" } },
+                {
+                    "name": "Load Conversation Messages",
+                    "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{base_url}}/admin/phyron/100203/trend_shop/messages/{{conversation_id}}?after_id=0" },
+                    "event": [{ "listen": "test", "script": { "exec": ["const data = pm.response.json();", "if (data.messages?.length) pm.collectionVariables.set('message_id', data.messages[data.messages.length - 1].id);"] } }]
+                },
+                {
+                    "name": "Send Admin Reply",
+                    "request": {
+                        "method": "POST",
+                        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "X-CSRF-TOKEN", "value": "{{csrf_token}}" }],
+                        "body": { "mode": "formdata", "formdata": [{ "key": "body", "value": "Hello, this product is available.", "type": "text" }] },
+                        "url": "{{base_url}}/admin/phyron/100203/trend_shop/messages/{{conversation_id}}"
+                    },
+                    "event": [{ "listen": "test", "script": { "exec": ["const data = pm.response.json();", "pm.collectionVariables.set('message_id', data.message.id);"] } }]
+                },
+                {
+                    "name": "Send Admin Multiple Images",
+                    "request": {
+                        "method": "POST",
+                        "header": [{ "key": "Accept", "value": "application/json" }, { "key": "X-CSRF-TOKEN", "value": "{{csrf_token}}" }],
+                        "body": { "mode": "formdata", "formdata": [{ "key": "attachments[]", "type": "file", "src": [] }, { "key": "attachments[]", "type": "file", "src": [] }] },
+                        "url": "{{base_url}}/admin/phyron/100203/trend_shop/messages/{{conversation_id}}"
+                    }
+                }
+            ]
+        }
+    ]
+}

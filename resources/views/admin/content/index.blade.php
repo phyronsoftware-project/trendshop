@@ -1,0 +1,6 @@
+@extends('admin.layouts.app')
+@section('title','Website content') @section('breadcrumb','Content / Pages')
+@section('content')
+<div class="mb-5"><h1 class="text-xl font-bold">Website pages</h1><p class="mt-1 text-xs text-slate-500">Edit published customer content in three languages.</p></div>
+<section class="border border-slate-200 bg-white shadow-sm"><table class="w-full text-left text-xs"><thead class="bg-slate-50 text-[10px] uppercase text-slate-500"><tr><th class="px-4 py-3">Page</th><th class="px-4 py-3">Slug</th><th class="px-4 py-3">Languages</th><th class="px-4 py-3">Status</th><th class="px-4 py-3 text-right">Action</th></tr></thead><tbody>@foreach($pages as $page)<tr class="border-t border-slate-100"><td class="px-4 py-3 font-bold">{{ $page->translation('en')?->title }}</td><td class="px-4 py-3 text-slate-500">{{ $page->slug }}</td><td class="px-4 py-3">ខ្មែរ · English · 中文</td><td class="px-4 py-3"><span class="bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase text-[#173f88]">{{ $page->status }}</span></td><td class="px-4 py-3 text-right"><a data-admin-load href="{{ route('admin.content.edit',$page) }}" class="inline-grid h-8 place-items-center border border-slate-200 px-3 font-bold text-[#173f88]">Edit</a></td></tr>@endforeach</tbody></table></section>
+@endsection

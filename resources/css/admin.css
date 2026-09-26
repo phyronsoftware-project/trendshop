@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+@import 'summernote/dist/summernote-lite.css';
+
+@source '../views/admin/**/*.blade.php';
+@source '../views/components/chat/**/*.blade.php';
+
+/* Keep shared chat components in the dashboard's light theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-khmer: 'Noto Sans Khmer', sans-serif;
+    --color-admin: #173f88;
+    --color-admin-deep: #0a2f6b;
+}
+
+html,
+body {
+    scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide chat scrollbars while preserving mouse, touch and keyboard scrolling. */
+[data-chat-messages],
+[data-chat-conversation-list],
+[data-chat-body] {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+[data-chat-messages]::-webkit-scrollbar,
+[data-chat-conversation-list]::-webkit-scrollbar,
+[data-chat-body]::-webkit-scrollbar {
+    display: none;
+}
+
+.admin-language-panel[hidden] {
+    display: none;
+}
+
+/* Keep the underline attached only to the language panel currently displayed. */
+[data-language-tab] {
+    border-color: transparent;
+    color: #64748b;
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+[data-language-tab]:hover {
+    background-color: #eff6ff;
+    color: #173f88;
+}
+
+[data-language-tab].is-active {
+    border-color: #173f88;
+    color: #173f88;
+}
+
+.note-editor.note-frame {
+    border: 1px solid #d8e0ec;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.note-toolbar {
+    background: #f8fafc;
+    border-bottom: 1px solid #d8e0ec;
+}
+
+.note-btn {
+    border-radius: 0 !important;
+    font-size: 12px !important;
+}
+
+.note-editable {
+    min-height: 260px;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+body.admin-loading {
+    overflow: hidden;
+}
+
+/* Increase compact admin typography by one step for easier reading. */
+.admin-shell .text-xs {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+}
+
+.admin-shell .text-\[11px\] {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+}
+
+.admin-shell .text-\[10px\] {
+    font-size: 0.6875rem;
+    line-height: 1rem;
+}
+
+/* Keep the desktop navigation usable in its compact state. */
+@media (min-width: 64rem) {
+    body.admin-sidebar-collapsed [data-admin-sidebar] {
+        width: 4rem;
+    }
+
+    body.admin-sidebar-collapsed [data-admin-main] {
+        padding-left: 4rem;
+    }
+
+    body.admin-sidebar-collapsed [data-admin-brand] {
+        width: 4rem;
+    }
+
+    body.admin-sidebar-collapsed [data-sidebar-label],
+    body.admin-sidebar-collapsed [data-sidebar-group-panel],
+    body.admin-sidebar-collapsed [data-sidebar-chevron],
+    body.admin-sidebar-collapsed [data-admin-brand-label] {
+        display: none;
+    }
+
+    body.admin-sidebar-collapsed [data-sidebar-collapse] {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    body.admin-sidebar-collapsed [data-sidebar-collapse-icon] {
+        transform: rotate(180deg);
+    }
+}
