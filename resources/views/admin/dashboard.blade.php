@@ -2,7 +2,7 @@
 @section('title', 'Dashboard') @section('breadcrumb', 'Overview')
 @section('content')
 {{-- Use the Cambodia calendar date in the dashboard header. --}}
-<div class="mb-5 flex items-center justify-between"><div><h1 class="text-xl font-bold text-slate-950">Dashboard</h1><p class="mt-1 text-xs text-slate-500">TrendShop sales and catalogue overview</p></div><span class="border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold">{{ now(config('app.display_timezone'))->format('d M Y') }}</span></div>
+<div class="mb-5 flex items-center justify-between"><div><h1 class="text-xl font-bold text-slate-950">Dashboard</h1><p class="mt-1 text-xs text-slate-500">TrendShop sales and catalogue overview</p></div><span class="border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold">{{ now(config('app.timezone', 'Asia/Phnom_Penh'))->format('d M Y') }}</span></div>
 {{-- Summarize the most important database totals in compact cards. --}}
 <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 @foreach([
