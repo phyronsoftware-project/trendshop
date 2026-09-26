@@ -24,9 +24,10 @@
                 ])>{{ $message->body }}</p>
             @endif
         </div>
+        {{-- Display chat timestamps with a type-safe configured timezone. --}}
         <div class="mt-1 flex items-center gap-2 px-1 text-[10px] text-slate-400 {{ $mine ? 'justify-end' : 'justify-start' }}">
             <span>{{ $message->sender?->name }}</span>
-            <time datetime="{{ $message->created_at?->toIso8601String() }}">{{ $message->created_at?->timezone(config('app.display_timezone'))->format('h:i A') }}</time>
+            <time datetime="{{ $message->created_at?->toIso8601String() }}">{{ $message->created_at?->timezone((string) config('app.display_timezone'))->format('h:i A') }}</time>
         </div>
     </div>
 </article>

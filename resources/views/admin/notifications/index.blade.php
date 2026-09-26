@@ -43,7 +43,7 @@
 
                                 <span class="flex shrink-0 items-center gap-2 text-[10px] font-semibold text-slate-400">
                                     {{-- Display the UTC notification timestamp in Cambodia local time. --}}
-                                    {{ $notification->created_at->timezone(config('app.display_timezone'))->format('h:i A') }}
+                                    {{ $notification->created_at->timezone((string) config('app.display_timezone'))->format('h:i A') }}
                                     <span class="grid size-7 place-items-center rounded-full text-[#173f88] transition-colors group-hover:bg-white"><x-admin.icon name="chevron-left" class="size-3.5 rotate-180" /></span>
                                 </span>
                             </button>

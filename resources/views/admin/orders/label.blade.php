@@ -69,7 +69,8 @@
 
         {{-- Balance essential dispatch details across the bottom edge of the label. --}}
         <footer class="label-footer">
-            <div><span class="muted">ORDER DATE</span><strong>{{ ($order->placed_at ?? $order->created_at)->timezone(config('app.display_timezone'))->format('d M Y, H:i') }}</strong></div>
+            {{-- Pass the configured display timezone to Carbon as a string. --}}
+            <div><span class="muted">ORDER DATE</span><strong>{{ ($order->placed_at ?? $order->created_at)->timezone((string) config('app.display_timezone'))->format('d M Y, H:i') }}</strong></div>
             <div><span class="muted">SHOP PHONE</span><strong>{{ $storeSettings['support_phone'] ?? 'TrendShop' }}</strong></div>
         </footer>
     </main>

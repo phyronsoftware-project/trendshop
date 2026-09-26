@@ -26,7 +26,7 @@ class ProfileController extends Controller
         $provinces = CambodiaProvince::names();
         $orderGroups = $user->orders->sortByDesc('created_at')->groupBy(function ($order): string {
             // Group profile orders using the customer's Cambodia-local calendar date.
-            $placedAt = ($order->placed_at ?? $order->created_at)->timezone(config('app.display_timezone'));
+            $placedAt = ($order->placed_at ?? $order->created_at)->timezone((string) config('app.display_timezone'));
 
             return match (true) {
                 $placedAt->isToday() => 'Today',

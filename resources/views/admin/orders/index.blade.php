@@ -21,7 +21,7 @@
                                     <td class="px-4 py-3">{{ $order->items->sum('quantity') }}</td>
                                     <td class="px-4 py-3 font-bold text-rose-500">${{ $order->grand_total }}</td>
                                     {{-- Display the UTC order timestamp in Cambodia local time. --}}
-                                    <td class="px-4 py-3">{{ ($order->placed_at ?? $order->created_at)->timezone(config('app.display_timezone'))->format('h:i A') }}</td>
+                                    <td class="px-4 py-3">{{ ($order->placed_at ?? $order->created_at)->timezone((string) config('app.display_timezone'))->format('h:i A') }}</td>
                                     {{-- Distinguish each fulfillment state with a consistent semantic color. --}}
                                     <td class="px-4 py-3"><span @class(['inline-flex px-2 py-1 text-[10px] font-bold uppercase tracking-wide', 'bg-amber-100 text-amber-800' => $order->status === 'pending', 'bg-blue-100 text-blue-800' => $order->status === 'confirmed', 'bg-violet-100 text-violet-800' => $order->status === 'processing', 'bg-cyan-100 text-cyan-800' => $order->status === 'shipped', 'bg-emerald-100 text-emerald-800' => $order->status === 'delivered', 'bg-red-100 text-red-700' => $order->status === 'cancelled', 'bg-slate-200 text-slate-700' => $order->status === 'refunded'])>{{ $order->status }}</span></td>
                                     <td class="px-4 py-3 text-right"><a data-admin-load href="{{ route('admin.orders.show', $order) }}" class="inline-flex h-8 items-center border border-[#173f88] px-3 text-[10px] font-bold text-[#173f88]">View order</a></td>

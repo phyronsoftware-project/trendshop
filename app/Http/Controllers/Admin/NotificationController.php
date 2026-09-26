@@ -34,7 +34,8 @@ class NotificationController extends Controller
             ->latest('id')
             ->get();
         $notificationGroups = $notifications->groupBy(function (AdminNotification $notification): string {
-            $createdAt = $notification->created_at->timezone(config('app.display_timezone'));
+            // Pass Carbon the configured timezone as its expected string type.
+            $createdAt = $notification->created_at->timezone((string) config('app.display_timezone'));
 
             return match (true) {
                 $createdAt->isToday() => 'Today',

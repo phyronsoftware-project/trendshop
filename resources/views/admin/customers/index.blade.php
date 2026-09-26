@@ -51,7 +51,7 @@
                         <td class="px-4 py-3 font-bold">{{ $customer->orders_count }}</td>
                         <td class="px-4 py-3 uppercase">{{ $customer->locale }}</td>
                         {{-- Display the customer's local Cambodia join date. --}}
-                        <td class="px-4 py-3">{{ $customer->created_at?->timezone(config('app.display_timezone'))->format('d M Y') }}</td>
+                        <td class="px-4 py-3">{{ $customer->created_at?->timezone((string) config('app.display_timezone'))->format('d M Y') }}</td>
                         <td class="px-4 py-3"><span @class(['px-2 py-1 text-[10px] font-bold uppercase', 'bg-emerald-100 text-emerald-800' => $customer->status === 'active', 'bg-amber-100 text-amber-800' => $customer->status === 'inactive', 'bg-red-100 text-red-700' => $customer->status === 'blocked'])>{{ $customer->status }}</span></td>
                         <td class="px-4 py-3"><div class="flex justify-end gap-2"><a data-admin-load href="{{ route('admin.customers.edit', $customer) }}" class="inline-flex h-8 items-center border border-[#173f88] px-3 text-[10px] font-bold text-[#173f88]">Edit</a>@if(auth('admin')->id() !== $customer->id)<form method="POST" action="{{ route('admin.customers.destroy', $customer) }}" onsubmit="return confirm('Delete this user?')">@csrf @method('DELETE')<button class="h-8 bg-red-600 px-3 text-[10px] font-bold text-white">Delete</button></form>@else<span class="inline-flex h-8 items-center px-2 text-[10px] font-semibold text-slate-400">Current account</span>@endif</div></td>
                     </tr>

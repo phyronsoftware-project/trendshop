@@ -6,7 +6,7 @@
 @section('content')
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
         {{-- Display order details using Cambodia local time. --}}
-        <div><a data-admin-load href="{{ route('admin.orders.index') }}" class="text-xs font-bold text-[#173f88]">← Back to orders</a><h1 class="mt-2 text-xl font-bold">Order {{ $order->order_number }}</h1><p class="mt-1 text-xs text-slate-500">Placed {{ ($order->placed_at ?? $order->created_at)->timezone(config('app.display_timezone'))->format('d M Y, h:i A') }}</p></div>
+        <div><a data-admin-load href="{{ route('admin.orders.index') }}" class="text-xs font-bold text-[#173f88]">← Back to orders</a><h1 class="mt-2 text-xl font-bold">Order {{ $order->order_number }}</h1><p class="mt-1 text-xs text-slate-500">Placed {{ ($order->placed_at ?? $order->created_at)->timezone((string) config('app.display_timezone'))->format('d M Y, h:i A') }}</p></div>
         <a href="{{ route('admin.orders.label', $order) }}" target="_blank" class="inline-flex h-9 items-center gap-2 border border-[#173f88] px-4 text-xs font-bold text-[#173f88]"><x-admin.icon name="print" class="size-4" /> Print delivery label</a>
     </div>
 
@@ -23,7 +23,8 @@
 
             <section class="border border-slate-200 bg-white p-5 shadow-sm"><h2 class="text-sm font-bold">Payment summary</h2><dl class="mt-4 grid gap-2 text-xs"><div class="flex justify-between"><dt class="text-slate-500">Subtotal</dt><dd>${{ $order->subtotal }}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Discount</dt><dd>-${{ $order->discount_total }}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Delivery</dt><dd>${{ $order->delivery_fee }}</dd></div><div class="flex justify-between border-t border-slate-200 pt-3 text-base font-bold"><dt>Total</dt><dd class="text-rose-500">${{ $order->grand_total }}</dd></div></dl></section>
 
-            @if($order->statusHistories->isNotEmpty())<section class="border border-slate-200 bg-white p-5 shadow-sm"><h2 class="text-sm font-bold">Status history</h2><div class="mt-4 grid gap-3">@foreach($order->statusHistories->sortByDesc('created_at') as $history)<div class="border-l-2 border-[#173f88] pl-3 text-[11px]"><strong>{{ ucfirst($history->to_status) }}</strong><p class="mt-0.5 text-slate-500">{{ $history->created_at?->timezone(config('app.display_timezone'))->format('d M Y, h:i A') }} · {{ $history->changedBy?->name ?? 'System' }}</p></div>@endforeach</div></section>@endif
+            {{-- Keep status history timestamps type-safe when applying the configured timezone. --}}
+            @if($order->statusHistories->isNotEmpty())<section class="border border-slate-200 bg-white p-5 shadow-sm"><h2 class="text-sm font-bold">Status history</h2><div class="mt-4 grid gap-3">@foreach($order->statusHistories->sortByDesc('created_at') as $history)<div class="border-l-2 border-[#173f88] pl-3 text-[11px]"><strong>{{ ucfirst($history->to_status) }}</strong><p class="mt-0.5 text-slate-500">{{ $history->created_at?->timezone((string) config('app.display_timezone'))->format('d M Y, h:i A') }} · {{ $history->changedBy?->name ?? 'System' }}</p></div>@endforeach</div></section>@endif
         </aside>
     </div>
 @endsection

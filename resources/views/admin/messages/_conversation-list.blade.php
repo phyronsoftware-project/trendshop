@@ -17,7 +17,8 @@
         <span class="min-w-0 flex-1">
             <span class="flex items-center justify-between gap-2">
                 <strong class="truncate text-xs text-slate-900">{{ $conversation->user->name }}</strong>
-                <time class="shrink-0 text-[10px] text-slate-400">{{ $conversation->last_message_at?->timezone(config('app.display_timezone'))->format('h:i A') }}</time>
+                {{-- Pass the configured display timezone to Carbon as a string. --}}
+                <time class="shrink-0 text-[10px] text-slate-400">{{ $conversation->last_message_at?->timezone((string) config('app.display_timezone'))->format('h:i A') }}</time>
             </span>
             <span class="mt-1 flex items-center justify-between gap-2">
                 <span class="truncate text-[11px] text-slate-500">
