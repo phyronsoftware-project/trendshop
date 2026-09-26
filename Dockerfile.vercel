@@ -1,0 +1,56 @@
+# -------------------------------------------
+# Stage 1: Build Vite frontend
+# -------------------------------------------
+FROM node:24-alpine AS frontend
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci
+
+COPY resources ./resources
+COPY public ./public
+COPY vite.config.js ./
+
+RUN npm run build
+
+
+# -------------------------------------------
+# Stage 2: Laravel / PHP
+# -------------------------------------------
+FROM dunglas/frankenphp:php8.4
+
+WORKDIR /app
+
+RUN install-php-extensions \
+    pdo_mysql \
+    mbstring \
+    intl \
+    zip \
+    opcache
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+COPY . .
+
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
+
+COPY --from=frontend /app/public/build /app/public/build
+
+RUN mkdir -p \
+    storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+
+CMD ["sh", "-c", "frankenphp php-server --root public --listen :${PORT:-80}"]
