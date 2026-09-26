@@ -1,5 +1,7 @@
 <?php
 
+$displayTimezone = env('APP_DISPLAY_TIMEZONE');
+
 return [
 
     /*
@@ -67,8 +69,10 @@ return [
 
     'timezone' => 'UTC',
 
-    // Keep storage in UTC while presenting dates in Cambodia local time.
-    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Phnom_Penh'),
+    // Fall back safely when a deployment provides an empty or invalid display timezone.
+    'display_timezone' => is_string($displayTimezone) && in_array($displayTimezone, timezone_identifiers_list(), true)
+        ? $displayTimezone
+        : 'Asia/Phnom_Penh',
 
     'display_timezone_offset' => '+07:00',
 
