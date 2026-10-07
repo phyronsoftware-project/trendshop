@@ -22,7 +22,7 @@ class CartToggleTest extends TestCase
 
         // Arrange one active product for the authenticated customer's toggle request.
         $customer = User::factory()->create(['role' => 'customer', 'status' => 'active']);
-        $product = Product::query()->active()->firstOrFail();
+        $product = Product::query()->active()->orderByDesc('published_at')->orderByDesc('id')->firstOrFail();
 
         $this->actingAs($customer)
             ->postJson(route('cart.store', $product), ['quantity' => 1])
@@ -46,7 +46,7 @@ class CartToggleTest extends TestCase
 
         // Persist one cart item so the matching product card renders as selected.
         $customer = User::factory()->create(['role' => 'customer', 'status' => 'active']);
-        $product = Product::query()->active()->firstOrFail();
+        $product = Product::query()->active()->orderByDesc('published_at')->orderByDesc('id')->firstOrFail();
         $cart = Cart::query()->create(['user_id' => $customer->id, 'status' => 'active', 'currency' => 'USD']);
         CartItem::query()->create(['cart_id' => $cart->id, 'product_id' => $product->id, 'quantity' => 1, 'unit_price' => $product->price]);
 

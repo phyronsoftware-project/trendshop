@@ -12,6 +12,10 @@ class StorefrontPagesTest extends TestCase
     /** Ensure each static customer page remains available. */
     public function test_customer_storefront_pages_are_available(): void
     {
+        if (! Schema::hasTable('products')) {
+            $this->markTestSkipped('TrendShop MySQL schema is required.');
+        }
+
         $pages = ['/', '/login', '/about-us', '/privacy-policy'];
 
         foreach ($pages as $page) {
@@ -22,11 +26,15 @@ class StorefrontPagesTest extends TestCase
     /** Ensure the product page includes its filtering interface. */
     public function test_product_page_displays_the_static_catalogue(): void
     {
+        if (! Schema::hasTable('products')) {
+            $this->markTestSkipped('TrendShop MySQL schema is required.');
+        }
+
         $this->get('/')
             ->assertSee('Studio Wireless Headphones')
             ->assertSee('category-filter')
             ->assertSee('product-search')
-            ->assertSee('data-pagination', false)
+            ->assertSee('role="navigation"', false)
             ->assertSee('flag/us.png', false)
             ->assertSee('flag/china.png', false)
             ->assertSee('logo_web/image.png', false)
@@ -52,7 +60,7 @@ class StorefrontPagesTest extends TestCase
             ->assertDontSee('bg-linear', false);
     }
 
-    /** Ensure the signed-in header provides account actions beside the customer email. */
+    /** Ensure the signed-in header provides account actions beside the customer name. */
     public function test_authenticated_header_displays_the_account_dropdown(): void
     {
         if (! Schema::hasTable('users')) {
@@ -64,7 +72,7 @@ class StorefrontPagesTest extends TestCase
         $this->actingAs($customer)
             ->get('/')
             ->assertOk()
-            ->assertSee($customer->email)
+            ->assertSee($customer->name ?: $customer->email)
             ->assertSee('Trusted shopping, made simple')
             ->assertSee('data-account-menu', false)
             ->assertSee('My profile')

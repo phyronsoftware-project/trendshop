@@ -60,7 +60,7 @@ class WishlistPageTest extends TestCase
         }
 
         $customer = User::factory()->create(['role' => 'customer', 'status' => 'active']);
-        $product = Product::query()->active()->firstOrFail();
+        $product = Product::query()->active()->orderByDesc('published_at')->orderByDesc('id')->firstOrFail();
         WishlistItem::query()->create(['user_id' => $customer->id, 'product_id' => $product->id]);
 
         $this->actingAs($customer)

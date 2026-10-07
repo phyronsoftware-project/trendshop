@@ -97,19 +97,19 @@
     {{-- Match storefront filtering to the compact operational dashboard style. --}}
     <section class="border-y border-slate-200 bg-[#f4f6f9] py-6 dark:border-slate-800 dark:bg-black">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div data-storefront-filter class="border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#0e1113]">
+            <form method="GET" action="{{ route('products.index') }}" data-storefront-filter data-product-filter-form class="border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-[#0e1113]">
                 <div class="mb-4 flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
                     <div>
                         <h2 class="text-sm font-bold text-slate-950 dark:text-white" data-i18n="filter.title">Filter products</h2>
                         <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400" data-i18n="filter.hint">Choose one or more categories</p>
                     </div>
                 </div>
-                <div class="grid gap-3 md:grid-cols-[1.15fr_.85fr]">
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_.55fr_.55fr_.7fr]">
                     <label class="grid gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200">
                         <span data-i18n="filter.categoryLabel">Categories</span>
-                        <select id="category-filter" multiple autocomplete="off" aria-label="Product categories">
+                        <select id="category-filter" name="categories[]" multiple autocomplete="off" aria-label="Product categories">
                             @foreach ($categories as $category)
-                                <option value="{{ $category->slug }}">{{ $category->translation()?->name }}</option>
+                                <option value="{{ $category->slug }}" @selected(in_array($category->slug, $filters['categories'] ?? [], true))>{{ $category->translation()?->name }}</option>
                             @endforeach
                         </select>
                     </label>
@@ -117,11 +117,15 @@
                         <span data-i18n="filter.searchLabel">Search</span>
                         <span class="relative block">
                             <svg class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-                            <input id="product-search" type="search" data-i18n-placeholder="filter.searchPlaceholder" placeholder="Search products..." class="h-9 w-full border border-slate-200 bg-white pl-9 pr-3 text-xs font-medium outline-none transition-colors focus:border-[#173f88] dark:border-slate-700 dark:bg-[#0e1113] dark:text-white">
+                            <input id="product-search" name="search" value="{{ $filters['search'] ?? '' }}" type="search" data-i18n-placeholder="filter.searchPlaceholder" placeholder="Search products..." class="h-9 w-full border border-slate-200 bg-white pl-9 pr-3 text-xs font-medium outline-none transition-colors focus:border-[#173f88] dark:border-slate-700 dark:bg-[#0e1113] dark:text-white">
                         </span>
                     </label>
+                    <label class="grid gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200"><span>Min price</span><input name="min_price" type="number" min="0" step="0.01" value="{{ $filters['min_price'] ?? '' }}" placeholder="$0" class="h-9 border border-slate-200 bg-white px-3 text-xs outline-none focus:border-[#173f88] dark:border-slate-700 dark:bg-[#0e1113]"></label>
+                    <label class="grid gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200"><span>Max price</span><input name="max_price" type="number" min="0" step="0.01" value="{{ $filters['max_price'] ?? '' }}" placeholder="Any" class="h-9 border border-slate-200 bg-white px-3 text-xs outline-none focus:border-[#173f88] dark:border-slate-700 dark:bg-[#0e1113]"></label>
+                    <label class="grid gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-200"><span>Sort by</span><select name="sort" class="h-9 border border-slate-200 bg-white px-2 text-xs outline-none focus:border-[#173f88] dark:border-slate-700 dark:bg-[#0e1113]"><option value="newest" @selected(($filters['sort'] ?? 'newest') === 'newest')>Newest</option><option value="best_selling" @selected(($filters['sort'] ?? '') === 'best_selling')>Best selling</option><option value="price_low" @selected(($filters['sort'] ?? '') === 'price_low')>Price: low to high</option><option value="price_high" @selected(($filters['sort'] ?? '') === 'price_high')>Price: high to low</option></select></label>
                 </div>
-            </div>
+                <div class="mt-3 flex flex-wrap items-center justify-between gap-3"><label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300"><input type="checkbox" name="in_stock" value="1" @checked($filters['in_stock'] ?? false) class="size-4 accent-[#173f88]">In-stock products only</label><div class="flex gap-2"><a href="{{ route('products.index') }}#product-catalogue" class="flex h-9 items-center border border-slate-200 px-4 text-xs font-bold text-slate-600 dark:border-slate-700 dark:text-slate-300">Reset</a><button class="h-9 bg-[#173f88] px-5 text-xs font-bold text-white">Apply filters</button></div></div>
+            </form>
         </div>
     </section>
 
@@ -133,18 +137,10 @@
                     <x-product-card :product="$product" :index="$loop->index" :wishlisted="$wishlistedProductIds->contains($product->id)" :in-cart="$cartProductIds->contains($product->id)" />
                 @endforeach
             </div>
-            <div data-empty-state class="hidden rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center font-semibold text-slate-500 dark:border-slate-700 dark:bg-[#0e1113] dark:text-slate-400" data-i18n="products.empty">No products match your filters.</div>
+            <div data-empty-state class="{{ $products->isEmpty() ? '' : 'hidden' }} border border-dashed border-slate-300 bg-white px-6 py-16 text-center font-semibold text-slate-500 dark:border-slate-700 dark:bg-[#0e1113] dark:text-slate-400" data-i18n="products.empty">No products match your filters.</div>
 
-            {{-- Keep static catalogue pagination compact like the supplied reference. --}}
-            <nav data-pagination class="mt-8 flex items-center justify-center gap-1.5" aria-label="Product pagination">
-                <button type="button" data-page-previous data-i18n-aria-label="pagination.previous" class="grid size-8 place-items-center border border-slate-300 bg-white text-slate-500 transition-all duration-300 hover:border-[#173f88] hover:text-[#173f88] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-[#0e1113] dark:text-slate-300">
-                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-                <div data-page-numbers class="flex items-center gap-1.5"></div>
-                <button type="button" data-page-next data-i18n-aria-label="pagination.next" class="grid size-8 place-items-center border border-slate-300 bg-white text-slate-700 transition-all duration-300 hover:border-[#173f88] hover:text-[#173f88] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-[#0e1113] dark:text-slate-300">
-                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-                </button>
-            </nav>
+            {{-- Paginate the database-backed catalogue while preserving active filters. --}}
+            <div class="mt-8"><x-pagination :paginator="$products" /></div>
         </div>
     </section>
 @endsection

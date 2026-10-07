@@ -5,6 +5,7 @@
     $categoryText = $product->category?->translation();
     $saveAmount = max((float) ($product->compare_at_price ?? 0) - (float) $product->price, 0);
     $image = $product->primaryImage()?->url();
+    $available = ! $product->track_stock || $product->stock_quantity > 0;
 @endphp
 
 {{-- Present live product data while preserving the approved card design. --}}
@@ -18,7 +19,7 @@
         <p class="min-h-3 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">{{ $categoryText?->name }}</p>
         <a href="{{ route('products.show', $product) }}" class="mt-1 line-clamp-2 min-h-8 text-center text-sm font-extrabold leading-4 text-slate-700 transition-colors hover:text-[#173f88] dark:text-white dark:hover:text-blue-300">{{ $productText?->name }}</a>
         <div class="mt-1 flex min-h-5 items-center justify-between gap-2 text-[11px] font-semibold">
-            <span class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" data-i18n="products.available">In stock</span>
+            <span @class(['rounded-full px-2 py-1 text-[10px] font-bold', 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' => $available, 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' => ! $available])>{{ $available ? 'In stock' : 'Out of stock' }}</span>
             <span class="text-slate-500 dark:text-slate-400"><span data-i18n="products.qty">Qty</span>: {{ $product->stock_quantity }}</span>
         </div>
         <div class="mt-1 flex items-start justify-between gap-3">
@@ -32,7 +33,7 @@
         </div>
         <div class="max-h-10 overflow-hidden pt-1 transition-all duration-300 md:max-h-0 md:opacity-0 md:group-hover:max-h-10 md:group-hover:opacity-100">
             {{-- Toggle the persisted cart state and fill the button when this product is selected. --}}
-            <form method="POST" action="{{ route('cart.store', $product) }}" data-cart-ajax data-login-url="{{ route('login') }}">@csrf<input type="hidden" name="quantity" value="1"><button type="submit" data-cart-toggle aria-pressed="{{ $inCart ? 'true' : 'false' }}" class="min-h-8 w-full border border-[#173f88] bg-white px-3 text-xs font-bold text-[#173f88] transition-all duration-300 hover:bg-blue-50 active:scale-[.98] disabled:cursor-wait disabled:opacity-60 aria-pressed:bg-[#173f88] aria-pressed:text-white aria-pressed:hover:bg-[#0a2f6b] dark:bg-[#0e1113] dark:text-blue-300 dark:aria-pressed:bg-[#173f88] dark:aria-pressed:text-white" data-i18n="{{ $inCart ? 'actions.removeCart' : 'actions.addCart' }}">{{ $inCart ? 'Remove from cart' : 'Add to cart' }}</button></form>
+            <form method="POST" action="{{ route('cart.store', $product) }}" data-cart-ajax data-login-url="{{ route('login') }}">@csrf<input type="hidden" name="quantity" value="1"><button type="submit" data-cart-toggle aria-pressed="{{ $inCart ? 'true' : 'false' }}" @disabled(! $available && ! $inCart) class="min-h-8 w-full border border-[#173f88] bg-white px-3 text-xs font-bold text-[#173f88] transition-all duration-300 hover:bg-blue-50 active:scale-[.98] disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 disabled:opacity-70 aria-pressed:bg-[#173f88] aria-pressed:text-white aria-pressed:hover:bg-[#0a2f6b] dark:bg-[#0e1113] dark:text-blue-300 dark:aria-pressed:bg-[#173f88] dark:aria-pressed:text-white" @if($available || $inCart) data-i18n="{{ $inCart ? 'actions.removeCart' : 'actions.addCart' }}" @endif>{{ $inCart ? 'Remove from cart' : ($available ? 'Add to cart' : 'Out of stock') }}</button></form>
         </div>
     </div>
 </article>

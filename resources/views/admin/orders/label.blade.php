@@ -62,10 +62,12 @@
             <div class="row"><span>Subtotal</span><strong>&#36;{{ $order->subtotal }}</strong></div>
             <div class="row"><span>Delivery</span><strong>&#36;{{ $order->delivery_fee }}</strong></div>
             <div class="row total"><span>Total</span><span>&#36;{{ $order->grand_total }} {{ $order->currency }}</span></div>
-            <div class="payment-state">Payment: {{ $order->payment_status === 'paid' ? 'Paid' : 'Cash on delivery' }}</div>
+            @php($paymentProvider = $order->payments->last()?->provider ?? 'cash_on_delivery')
+            <div class="payment-state">Payment: {{ $order->payment_status === 'paid' ? 'Paid' : str($paymentProvider)->replace('_', ' ')->title() }}</div>
         </div>
 
         @if($order->customer_note)<div class="note"><strong>Delivery note:</strong> {{ $order->customer_note }}</div>@endif
+        @if($order->tracking_number)<div class="note"><strong>Tracking:</strong> {{ $order->shipping_carrier }} · {{ $order->tracking_number }}</div>@endif
 
         {{-- Balance essential dispatch details across the bottom edge of the label. --}}
         <footer class="label-footer">

@@ -127,13 +127,31 @@ class OrderManagementTest extends TestCase
         $order = Order::query()->firstOrFail();
         $order->update(['status' => 'pending', 'payment_status' => 'unpaid']);
 
-        $response = $this->actingAs($admin, 'admin')->patch(route('admin.orders.update', $order), [
-            'status' => 'delivered',
-            'payment_status' => 'paid',
-        ]);
+        foreach (['confirmed', 'processing', 'shipped'] as $status) {
+            $this->actingAs($admin, 'admin')->patch(route('admin.orders.update', $order), [
+                'status' => $status,
+                'payment_status' => 'pending',
+            ])->assertRedirect();
+            $order->refresh();
+        }
+        $response = $this->actingAs($admin, 'admin')->patch(route('admin.orders.update', $order), ['status' => 'delivered', 'payment_status' => 'paid']);
 
         $response->assertRedirect(route('admin.orders.label', ['order' => $order, 'updated' => 1]));
         $this->assertDatabaseHas('orders', ['id' => $order->id, 'status' => 'delivered', 'payment_status' => 'paid']);
+    }
+
+    public function test_order_cannot_skip_the_fulfillment_sequence(): void
+    {
+        $admin = User::query()->where('role', 'admin')->firstOrFail();
+        $order = Order::query()->firstOrFail();
+        $order->update(['status' => 'pending', 'payment_status' => 'unpaid']);
+
+        $this->actingAs($admin, 'admin')->patch(route('admin.orders.update', $order), [
+            'status' => 'delivered',
+            'payment_status' => 'paid',
+        ])->assertSessionHasErrors('status');
+
+        $this->assertSame('pending', $order->fresh()->status);
     }
 
     /** Create one deterministic order for date grouping tests. */

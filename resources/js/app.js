@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileMenu = document.querySelector('[data-mobile-menu]');
     const categorySelect = document.querySelector('#category-filter');
     const productSearch = document.querySelector('#product-search');
+    const productFilterForm = document.querySelector('[data-product-filter-form]');
     const productCards = [...document.querySelectorAll('[data-product-card]')];
     const emptyState = document.querySelector('[data-empty-state]');
     const productGrid = document.querySelector('[data-product-grid]');
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const productModalNext = document.querySelector('[data-product-modal-next]');
     const productThumbnails = [...document.querySelectorAll('[data-product-thumbnail]')];
     const productQuantity = document.querySelector('[data-product-quantity]');
+    const checkoutQuantity = document.querySelector('[data-checkout-quantity]');
     const quantityDecrease = document.querySelector('[data-quantity-decrease]');
     const quantityIncrease = document.querySelector('[data-quantity-increase]');
     const galleryModal = document.querySelector('[data-gallery-modal]');
@@ -250,6 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 button.setAttribute('aria-pressed', String(payload.wishlisted));
                 button.setAttribute('aria-label', payload.wishlisted ? 'Remove from wishlist' : 'Add to wishlist');
+                const wishlistCount = document.querySelector('[data-wishlist-count]');
+                if (wishlistCount) {
+                    wishlistCount.textContent = String(payload.wishlist_count);
+                    wishlistCount.classList.toggle('hidden', payload.wishlist_count === 0);
+                }
                 if (form.hasAttribute('data-wishlist-remove-card') && !payload.wishlisted) {
                     form.closest('[data-product-card]')?.remove();
                     const wishlistGrid = document.querySelector('[data-wishlist-grid]');
@@ -297,6 +304,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.setAttribute('aria-pressed', String(payload.in_cart));
                 button.dataset.i18n = translationKey;
                 button.textContent = translate(activeLocale, translationKey);
+                const cartCount = document.querySelector('[data-cart-count]');
+                if (cartCount) {
+                    cartCount.textContent = String(payload.cart_count);
+                    cartCount.classList.toggle('hidden', payload.cart_count === 0);
+                }
                 showAlert('success', payload.message, false);
             } catch {
                 showAlert('error', 'Unable to update cart. Please try again.', false);
@@ -453,13 +465,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let categoryControl = null;
+    let previousCategoryValues = [...(categorySelect?.selectedOptions ?? [])]
+        .map((option) => option.value)
+        .sort()
+        .join('|');
     if (categorySelect) {
         categoryControl = new TomSelect(categorySelect, {
             plugins: { remove_button: { title: 'Remove' } },
             placeholder: translate(localStorage.getItem('trendshop-locale') ?? 'km', 'filter.categoryPlaceholder'),
             hideSelected: true,
             onChange(values) {
-                selectedCategories = values;
+                const normalizedValues = Array.isArray(values) ? values : (values ? [values] : []);
+                selectedCategories = normalizedValues;
+                const currentCategoryValues = [...normalizedValues].sort().join('|');
+
+                // Ignore initialization and translation refreshes that do not change selection.
+                if (currentCategoryValues === previousCategoryValues) return;
+                previousCategoryValues = currentCategoryValues;
+                if (productFilterForm) {
+                    productFilterForm.requestSubmit();
+                    return;
+                }
                 currentPage = 1;
                 filterProducts();
             },
@@ -589,6 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     productSearch?.addEventListener('input', () => {
+        if (productFilterForm) return;
         currentPage = 1;
         filterProducts();
     });
@@ -700,11 +727,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keep the static product quantity within the displayed stock limit.
     quantityDecrease?.addEventListener('click', () => {
         productQuantity.value = String(Math.max(1, Number(productQuantity.value) - 1));
+        if (checkoutQuantity) checkoutQuantity.value = productQuantity.value;
     });
 
     quantityIncrease?.addEventListener('click', () => {
         const maximumQuantity = Number(quantityIncrease.dataset.max ?? 1);
         productQuantity.value = String(Math.min(maximumQuantity, Number(productQuantity.value) + 1));
+        if (checkoutQuantity) checkoutQuantity.value = productQuantity.value;
+    });
+    productQuantity?.addEventListener('input', () => {
+        if (checkoutQuantity) checkoutQuantity.value = productQuantity.value;
     });
 
     // Open the dynamic product gallery and navigate every sub-image.
@@ -780,5 +812,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     applyLocale(localStorage.getItem('trendshop-locale') ?? 'km');
-    filterProducts();
+    if (!productFilterForm) filterProducts();
 });

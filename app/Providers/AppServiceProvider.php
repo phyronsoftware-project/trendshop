@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\AdminNotification;
+use App\Models\CartItem;
 use App\Models\Setting;
 use App\Models\SocialLink;
+use App\Models\WishlistItem;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -48,18 +50,32 @@ class AppServiceProvider extends ServiceProvider
         View::composer(['components.header', 'components.footer'], function ($view): void {
             $settings = Schema::hasTable('settings')
                 ? Setting::query()
-                ->where('is_public', true)
-                ->pluck('value', 'setting_key')
+                    ->where('is_public', true)
+                    ->pluck('value', 'setting_key')
                 : collect();
 
             $socialLinks = Schema::hasTable('social_links')
                 ? SocialLink::query()
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->get()
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->get()
                 : collect();
 
-            $view->with(compact('settings', 'socialLinks'));
+            // Share compact shopping counts with the authenticated storefront header.
+            $wishlistCount = 0;
+            $cartCount = 0;
+            if (auth()->check()) {
+                $wishlistCount = Schema::hasTable('wishlist_items')
+                    ? WishlistItem::query()->where('user_id', auth()->id())->count()
+                    : 0;
+                $cartCount = Schema::hasTable('cart_items')
+                    ? (int) CartItem::query()->whereHas('cart', fn ($query) => $query
+                        ->where('user_id', auth()->id())
+                        ->where('status', 'active'))->sum('quantity')
+                    : 0;
+            }
+
+            $view->with(compact('cartCount', 'settings', 'socialLinks', 'wishlistCount'));
         });
 
         /*
@@ -70,8 +86,8 @@ class AppServiceProvider extends ServiceProvider
         View::composer('admin.*', function ($view): void {
             $adminUnreadNotifications = Schema::hasTable('admin_notifications')
                 ? AdminNotification::query()
-                ->whereNull('read_at')
-                ->count()
+                    ->whereNull('read_at')
+                    ->count()
                 : 0;
 
             $view->with(compact('adminUnreadNotifications'));

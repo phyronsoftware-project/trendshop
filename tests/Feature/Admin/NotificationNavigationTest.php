@@ -102,6 +102,8 @@ class NotificationNavigationTest extends TestCase
         $this->travelTo('2026-09-17 13:01:00');
         $admin = User::query()->where('role', 'admin')->firstOrFail();
         $order = Order::query()->firstOrFail();
+        // Isolate the timestamp assertion from notification dates already in the demo database.
+        AdminNotification::query()->delete();
         AdminNotification::query()->create([
             'admin_user_id' => $admin->id,
             'order_id' => $order->id,

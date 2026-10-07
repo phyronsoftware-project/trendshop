@@ -63,6 +63,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::post('/orders/{order}/reorder', [OrderController::class, 'reorder'])->name('orders.reorder');
     // Keep customer support chat protected by the storefront session.
     Route::get('/contact', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/contact/messages', [ChatController::class, 'messages'])->name('chat.messages.index');

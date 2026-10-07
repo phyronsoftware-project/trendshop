@@ -41,6 +41,9 @@ class CartController extends Controller
 
             return response()->json([
                 'in_cart' => false,
+                'cart_count' => (int) CartItem::query()->whereHas('cart', fn ($query) => $query
+                    ->where('user_id', $request->user()->id)
+                    ->where('status', 'active'))->sum('quantity'),
                 'message' => 'Product removed from cart.',
             ]);
         }
@@ -64,6 +67,9 @@ class CartController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'in_cart' => true,
+                'cart_count' => (int) CartItem::query()->whereHas('cart', fn ($query) => $query
+                    ->where('user_id', $request->user()->id)
+                    ->where('status', 'active'))->sum('quantity'),
                 'message' => 'Product added to cart.',
             ]);
         }

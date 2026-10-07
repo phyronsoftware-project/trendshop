@@ -40,6 +40,7 @@ class WishlistController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'wishlisted' => $wishlisted,
+                'wishlist_count' => WishlistItem::query()->where('user_id', $request->user()->id)->count(),
                 'message' => $message,
             ]);
         }

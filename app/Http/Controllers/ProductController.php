@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProductFilterRequest;
 use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Order;
@@ -18,9 +19,38 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(Request $request): View
+    public function index(ProductFilterRequest $request): View
     {
-        $products = Product::query()->active()->with(['translations', 'images', 'category.translations'])->latest('published_at')->get();
+        $filters = $request->validated();
+        $locale = app()->getLocale();
+        $productsQuery = Product::query()
+            ->active()
+            ->with(['translations', 'images', 'category.translations'])
+            ->when(filled($filters['search'] ?? null), function ($query) use ($filters, $locale): void {
+                $search = trim($filters['search']);
+                $query->where(function ($inner) use ($search, $locale): void {
+                    $inner->where('sku', 'like', "%{$search}%")
+                        ->orWhereHas('translations', fn ($translationQuery) => $translationQuery
+                            ->whereIn('locale', array_unique([$locale, 'en']))
+                            ->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->when($filters['categories'] ?? [], fn ($query, $categories) => $query
+                ->whereHas('category', fn ($categoryQuery) => $categoryQuery->whereIn('slug', $categories)))
+            ->when(isset($filters['min_price']), fn ($query) => $query->where('price', '>=', $filters['min_price']))
+            ->when(isset($filters['max_price']), fn ($query) => $query->where('price', '<=', $filters['max_price']))
+            ->when($request->boolean('in_stock'), fn ($query) => $query->where(function ($stockQuery): void {
+                $stockQuery->where('track_stock', false)->orWhere('stock_quantity', '>', 0);
+            }));
+
+        // Apply a stable database sort before paginating the storefront catalogue.
+        match ($filters['sort'] ?? 'newest') {
+            'price_low' => $productsQuery->orderBy('price')->orderByDesc('id'),
+            'price_high' => $productsQuery->orderByDesc('price')->orderByDesc('id'),
+            'best_selling' => $productsQuery->orderByDesc('sold_quantity')->orderByDesc('id'),
+            default => $productsQuery->orderByDesc('published_at')->orderByDesc('id'),
+        };
+        $products = $productsQuery->paginate(15)->withQueryString();
         $categories = Category::query()->where('is_active', true)->with('translations')->orderBy('sort_order')->get();
         // Load one compact set so every product card can render its saved state without N+1 queries.
         $wishlistedProductIds = $request->user()
@@ -33,7 +63,12 @@ class ProductController extends Controller
                 ->where('status', 'active'))->pluck('product_id')
             : collect();
         // Rank the ten highest-selling active products for the storefront ticker and feature.
-        $topSellers = $products->sortByDesc('sold_quantity')->take(10)->values();
+        $topSellers = Product::query()->active()
+            ->with(['translations', 'images', 'category.translations'])
+            ->orderByDesc('sold_quantity')
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get();
         $bestSeller = $topSellers->first();
 
         // Present real store-wide social proof without exposing any customer's private account data.
@@ -41,10 +76,10 @@ class ProductController extends Controller
             'customers_count' => User::query()->where('role', 'customer')->where('status', 'active')->count(),
             'delivered_orders_count' => Order::query()->where('status', 'delivered')->count(),
             'items_sold' => (int) OrderItem::query()->whereHas('order', fn ($query) => $query->where('status', 'delivered'))->sum('quantity'),
-            'products_count' => $products->count(),
+            'products_count' => Product::query()->active()->count(),
         ];
 
-        return view('products.index', compact('bestSeller', 'cartProductIds', 'categories', 'products', 'storeSummary', 'topSellers', 'wishlistedProductIds'));
+        return view('products.index', compact('bestSeller', 'cartProductIds', 'categories', 'filters', 'products', 'storeSummary', 'topSellers', 'wishlistedProductIds'));
     }
 
     public function show(Request $request, Product $product): View

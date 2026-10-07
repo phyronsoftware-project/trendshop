@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ProductCheckoutTest extends TestCase
@@ -72,7 +73,10 @@ class ProductCheckoutTest extends TestCase
             'is_default' => true,
         ]);
         $product = Product::query()->active()->where('stock_quantity', '>', 0)->firstOrFail();
+        $originalStock = $product->stock_quantity;
+        $originalSold = $product->sold_quantity;
         $csrfToken = 'product-checkout-token';
+        $checkoutToken = (string) Str::uuid();
 
         $response = $this->actingAs($customer)->withSession(['_token' => $csrfToken])->post(route('orders.store'), [
             '_token' => $csrfToken,
@@ -80,11 +84,71 @@ class ProductCheckoutTest extends TestCase
             'product_id' => $product->id,
             'quantity' => 1,
             'source' => 'product',
+            'payment_method' => 'cash_on_delivery',
+            'checkout_token' => $checkoutToken,
         ]);
 
         $response
             ->assertRedirect(route('products.show', $product))
             ->assertSessionHas('success');
         $this->assertDatabaseHas('orders', ['user_id' => $customer->id, 'user_address_id' => $address->id]);
+        $orderId = (int) $this->app['db']->table('orders')->where('checkout_token', $checkoutToken)->value('id');
+        $this->assertDatabaseHas('payments', ['order_id' => $orderId, 'provider' => 'cash_on_delivery', 'status' => 'pending']);
+        $this->assertSame($originalStock - 1, $product->fresh()->stock_quantity);
+        $this->assertSame($originalSold, $product->fresh()->sold_quantity);
+    }
+
+    /** Reusing a checkout token must never create or reserve stock twice. */
+    public function test_repeated_checkout_submission_returns_the_original_order(): void
+    {
+        $customer = User::factory()->create(['role' => 'customer']);
+        $address = $customer->addresses()->create([
+            'label' => 'Home', 'recipient_name' => 'Safe Checkout', 'phone' => '012345678',
+            'address_line_1' => 'Street 2004', 'city_province' => 'Phnom Penh', 'country_code' => 'KH',
+        ]);
+        $product = Product::query()->active()->where('stock_quantity', '>', 1)->firstOrFail();
+        $originalStock = $product->stock_quantity;
+        $checkoutToken = (string) Str::uuid();
+        $payload = [
+            'address_id' => $address->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'source' => 'product',
+            'payment_method' => 'cash_on_delivery',
+            'checkout_token' => $checkoutToken,
+        ];
+
+        $this->actingAs($customer)->post(route('orders.store'), $payload);
+        $this->actingAs($customer)->post(route('orders.store'), $payload)->assertRedirect();
+
+        $this->assertSame(1, $customer->orders()->where('checkout_token', $checkoutToken)->count());
+        $this->assertSame($originalStock - 1, $product->fresh()->stock_quantity);
+    }
+
+    public function test_customer_can_cancel_a_pending_order_and_restore_stock_once(): void
+    {
+        $customer = User::factory()->create(['role' => 'customer']);
+        $address = $customer->addresses()->create([
+            'label' => 'Home', 'recipient_name' => 'Cancel Customer', 'phone' => '012345678',
+            'address_line_1' => 'Street 2004', 'city_province' => 'Phnom Penh', 'country_code' => 'KH',
+        ]);
+        $product = Product::query()->active()->where('track_stock', true)->where('stock_quantity', '>', 0)->firstOrFail();
+        $originalStock = $product->stock_quantity;
+
+        $this->actingAs($customer)->post(route('orders.store'), [
+            'address_id' => $address->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'source' => 'product',
+            'payment_method' => 'cash_on_delivery',
+            'checkout_token' => (string) Str::uuid(),
+        ]);
+        $order = $customer->orders()->latest('id')->firstOrFail();
+
+        $this->actingAs($customer)->patch(route('orders.cancel', $order))->assertRedirect();
+
+        $this->assertSame('cancelled', $order->fresh()->status);
+        $this->assertSame($originalStock, $product->fresh()->stock_quantity);
+        $this->assertNotNull($order->fresh()->stock_released_at);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\UpdateOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
 use App\Models\Order;
@@ -58,14 +59,15 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
-        $order->load(['handledBy:id,name', 'items', 'statusHistories.changedBy:id,name', 'user:id,name,email']);
+        $order->load(['handledBy:id,name', 'items', 'payments', 'statusHistories.changedBy:id,name', 'user:id,name,email']);
+        $availableStatuses = app(UpdateOrderStatus::class)->availableStatuses($order);
 
-        return view('admin.orders.show', compact('order'));
+        return view('admin.orders.show', compact('availableStatuses', 'order'));
     }
 
     public function label(Order $order): View
     {
-        $order->load(['items', 'user:id,name,email']);
+        $order->load(['items', 'payments', 'user:id,name,email']);
         $storeSettings = Setting::query()
             ->where('setting_key', 'support_phone')
             ->pluck('value', 'setting_key');
@@ -75,16 +77,25 @@ class OrderController extends Controller
         return view('admin.orders.label', compact('order', 'orderReference', 'storeSettings'));
     }
 
-    public function update(Request $request, Order $order): RedirectResponse
+    public function update(Request $request, Order $order, UpdateOrderStatus $updateOrderStatus): RedirectResponse
     {
-        $data = $request->validate(['status' => ['required', Rule::in(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])], 'payment_status' => ['required', Rule::in(['unpaid', 'pending', 'paid', 'failed', 'refunded'])]]);
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])],
+            'payment_status' => ['required', Rule::in(['unpaid', 'pending', 'paid', 'failed', 'refunded'])],
+            'shipping_carrier' => ['nullable', 'string', 'max:100'],
+            'tracking_number' => ['nullable', 'string', 'max:191'],
+            'admin_note' => ['nullable', 'string', 'max:1000'],
+        ]);
         $previousStatus = $order->status;
-        $updates = [...$data, 'handled_by' => $request->user()->id];
-        if (in_array($data['status'], ['confirmed', 'shipped', 'delivered', 'cancelled'], true)) {
-            $updates[$data['status'].'_at'] = now();
-        }
-        $order->update($updates);
-        $order->statusHistories()->create(['changed_by' => $request->user()->id, 'from_status' => $previousStatus, 'to_status' => $data['status'], 'note' => 'Updated from admin dashboard.']);
+        $updateOrderStatus->handle(
+            $order,
+            $data['status'],
+            $request->user(),
+            $data['payment_status'],
+            $data['admin_note'] ?? null,
+            $data['shipping_carrier'] ?? null,
+            $data['tracking_number'] ?? null,
+        );
         AdminNotification::query()->where('order_id', $order->id)->whereNull('read_at')->update(['read_at' => now()]);
 
         $shouldPrintLabel = in_array($data['status'], ['shipped', 'delivered'], true)
